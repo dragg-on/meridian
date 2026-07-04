@@ -17,27 +17,44 @@ export default function Home() {
   });
 
   return (
-    <main style={{ padding: "40px" }}>
-      <h1>Meridian</h1>
+    <main className="min-h-screen bg-neutral-950 text-neutral-100 p-10">
+      <h1 className="text-3xl font-semibold text-amber-400 mb-6">Meridian</h1>
 
       <input
         type="text"
         placeholder="Search titles..."
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        style={{ padding: "8px", marginBottom: "20px", width: "250px" }}
+        className="bg-neutral-900 border border-neutral-700 rounded-full px-4 py-2 mb-6 w-64 text-sm focus:outline-none focus:border-amber-400"
       />
 
-      <div style={{ display: "flex", gap: "12px", marginBottom: "24px" }}>
-        <button onClick={() => setSelectedCountry(null)}>All</button>
+      <div className="flex gap-3 mb-8 flex-wrap">
+        <button
+          onClick={() => setSelectedCountry(null)}
+          className={`px-4 py-2 rounded-full text-sm border ${
+            selectedCountry === null
+              ? "bg-amber-400 text-neutral-900 border-amber-400"
+              : "border-neutral-700 text-neutral-300"
+          }`}
+        >
+          All
+        </button>
         {countries.map((country) => (
-          <button key={country} onClick={() => setSelectedCountry(country)}>
+          <button
+            key={country}
+            onClick={() => setSelectedCountry(country)}
+            className={`px-4 py-2 rounded-full text-sm border ${
+              selectedCountry === country
+                ? "bg-amber-400 text-neutral-900 border-amber-400"
+                : "border-neutral-700 text-neutral-300"
+            }`}
+          >
             {country}
           </button>
         ))}
       </div>
 
-      <div style={{ display: "flex", gap: "16px", flexWrap: "wrap" }}>
+      <div className="flex gap-4 flex-wrap">
         {filtered.map((movie) => (
           <MovieCard key={movie.id} movie={movie} />
         ))}
