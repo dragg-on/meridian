@@ -1,12 +1,18 @@
-import { MOVIES } from "@/lib/data";
+import { supabase } from "@/lib/supabase";
 import Link from "next/link";
+import MuxPlayer from "@mux/mux-player-react";
 
 export default async function MovieDetail({ params }) {
   const { id } = await params;
-  const movie = MOVIES.find((m) => m.id === Number(id));
 
-  if (!movie) {
-    return <div className="p-10 text-neutral-100">Drama not found.</div>;
+  const { data: movie, error } = await supabase
+    .from("dramas")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (error || !movie) {
+    return <div className="p-10 text-neutral-100 bg-neutral-950 min-h-screen">Drama not found.</div>;
   }
 
   return (
@@ -19,18 +25,20 @@ export default async function MovieDetail({ params }) {
         <p className="text-neutral-400 mt-1">{movie.year} · {movie.country} · {movie.genre}</p>
         <p className="mt-4 max-w-xl text-neutral-300">{movie.synopsis}</p>
 
-        <h2 className="mt-8 mb-3 text-lg font-medium text-amber-400">Episodes</h2>
-        <div className="flex flex-col gap-2 max-w-md">
-          {movie.episodes.map((ep) => (
-            <div
-              key={ep.id}
-              className="border border-neutral-800 rounded-lg p-3 flex justify-between items-center hover:border-amber-400 cursor-pointer transition-colors"
-            >
-              <span>{ep.title}</span>
-              <span className="text-sm text-neutral-400">{ep.duration}</span>
-            </div>
-          ))}
-        </div>
+        {movie.playback_id ? (
+          <div className="mt-8 max-w-2xl">
+            <MuxPlayer
+              playbackId={movie.playback_id}
+              metadata={{ video_title: movie.title }}
+              streamType="on-demand"
+              style={{ aspectRatio: "16/9", width: "100%" }}
+            />
+          </div>
+        ) : (
+          <div className="mt-8 max-w-md border border-dashed border-neutral-700 rounded-lg p-6 text-neutral-500 text-sm">
+            Coming soon to Meridian — not yet available to stream.
+          </div>
+        )}
       </div>
     </main>
   );
