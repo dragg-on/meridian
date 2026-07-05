@@ -1,16 +1,31 @@
 "use client";
 
-import { useState } from "react";
-import { MOVIES } from "@/lib/data";
+import { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabase";
 import MovieCard from "@/components/MovieCard";
 
 export default function Home() {
+  const [movies, setMovies] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [selectedCountry, setSelectedCountry] = useState(null);
   const [query, setQuery] = useState("");
   const [myList, setMyList] = useState([]);
   const [showMyList, setShowMyList] = useState(false);
 
-  const countries = [...new Set(MOVIES.map((m) => m.country))];
+  useEffect(() => {
+    async function fetchMovies() {
+      const { data, error } = await supabase.from("dramas").select("*");
+      if (error) {
+        console.error("Error fetching dramas:", error);
+      } else {
+        setMovies(data);
+      }
+      setLoading(false);
+    }
+    fetchMovies();
+  }, []);
+
+  const countries = [...new Set(movies.map((m) => m.country))];
 
   const toggleMyList = (id) => {
     setMyList((prev) =>
@@ -18,13 +33,17 @@ export default function Home() {
     );
   };
 
-  const baseList = showMyList ? MOVIES.filter((m) => myList.includes(m.id)) : MOVIES;
+  const baseList = showMyList ? movies.filter((m) => myList.includes(m.id)) : movies;
 
   const filtered = baseList.filter((movie) => {
     const matchesCountry = selectedCountry ? movie.country === selectedCountry : true;
     const matchesQuery = movie.title.toLowerCase().includes(query.toLowerCase());
     return matchesCountry && matchesQuery;
   });
+
+  if (loading) {
+    return <main className="min-h-screen bg-neutral-950 text-neutral-100 p-10">Loading...</main>;
+  }
 
   return (
     <main className="min-h-screen bg-neutral-950 text-neutral-100 p-10">
