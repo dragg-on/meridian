@@ -138,7 +138,7 @@ export default function Home() {
   });
 
   if (loading) {
-    return <main className="min-h-screen bg-neutral-950 text-neutral-100 p-10">Loading...</main>;
+    return <main className="min-h-screen bg-neutral-950 text-neutral-100 p-6 sm:p-10">Loading...</main>;
   }
 
   const featured = movies[0];
@@ -146,12 +146,12 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-neutral-950 text-neutral-100">
-      <div className="flex justify-between items-center px-10 py-6">
-        <h1 className="text-3xl font-semibold text-amber-400">Meridian</h1>
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 px-4 sm:px-10 py-4 sm:py-6">
+        <h1 className="text-2xl sm:text-3xl font-semibold text-amber-400">Meridian</h1>
+        <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
           <button
             onClick={() => setShowMyList(!showMyList)}
-            className={`px-4 py-2 rounded-full text-sm border ${
+            className={`px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm border ${
               showMyList
                 ? "bg-amber-400 text-neutral-900 border-amber-400"
                 : "border-neutral-700 text-neutral-300"
@@ -162,10 +162,10 @@ export default function Home() {
 
           {user ? (
             <>
-              <span className="text-sm text-neutral-400 hidden sm:inline">{user.email}</span>
+              <span className="text-xs sm:text-sm text-neutral-400 hidden md:inline">{user.email}</span>
               <button
                 onClick={handleLogout}
-                className="px-4 py-2 rounded-full text-sm border border-neutral-700 text-neutral-300"
+                className="px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm border border-neutral-700 text-neutral-300"
               >
                 Log out
               </button>
@@ -176,7 +176,7 @@ export default function Home() {
                 setAuthMode("login");
                 setShowAuthModal(true);
               }}
-              className="px-4 py-2 rounded-full text-sm bg-amber-400 text-neutral-900 font-semibold"
+              className="px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm bg-amber-400 text-neutral-900 font-semibold"
             >
               Log in
             </button>
@@ -186,14 +186,14 @@ export default function Home() {
 
       {featured && !showMyList && !query && (
         <div
-          className="mx-10 mb-10 rounded-xl p-10 flex flex-col justify-end min-h-64"
+          className="mx-4 sm:mx-10 mb-8 sm:mb-10 rounded-xl p-6 sm:p-10 flex flex-col justify-end min-h-48 sm:min-h-64"
           style={{
             background:
               "linear-gradient(0deg, rgba(10,12,16,0.95) 0%, rgba(10,12,16,0.3) 100%), linear-gradient(135deg, #4a2d6b, #180f24)",
           }}
         >
           <p className="text-xs tracking-widest text-amber-300 mb-2">FEATURED · {featured.country?.toUpperCase()}</p>
-          <h2 className="text-4xl font-semibold mb-2">{featured.title}</h2>
+          <h2 className="text-2xl sm:text-4xl font-semibold mb-2">{featured.title}</h2>
           <p className="text-neutral-300 max-w-lg mb-4 text-sm">{featured.synopsis}</p>
           <div>
             <a href={`/movie/${featured.id}`} className={heroLinkClass}>View drama</a>
@@ -201,11 +201,11 @@ export default function Home() {
         </div>
       )}
 
-      <div className="px-10">
+      <div className="px-4 sm:px-10">
         {continueWatching.length > 0 && !showMyList && !query && (
-          <div className="mb-10">
-            <h2 className="text-lg font-medium mb-4">Continue Watching</h2>
-            <div className="flex gap-4 overflow-x-auto pb-2">
+          <div className="mb-8 sm:mb-10">
+            <h2 className="text-base sm:text-lg font-medium mb-3 sm:mb-4">Continue Watching</h2>
+            <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-2">
               {continueWatching.map((row: any) => (
                 <MovieCard
                   key={row.drama_id}
@@ -223,13 +223,13 @@ export default function Home() {
           placeholder="Search titles..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          className="bg-neutral-900 border border-neutral-700 rounded-full px-4 py-2 mb-6 w-64 text-sm focus:outline-none focus:border-amber-400"
+          className="bg-neutral-900 border border-neutral-700 rounded-full px-4 py-2 mb-5 sm:mb-6 w-full sm:w-64 text-sm focus:outline-none focus:border-amber-400"
         />
 
-        <div className="flex gap-3 mb-10 flex-wrap">
+        <div className="flex gap-2 sm:gap-3 mb-8 sm:mb-10 flex-wrap">
           <button
             onClick={() => setSelectedCountry(null)}
-            className={`px-4 py-2 rounded-full text-sm border ${
+            className={`px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm border ${
               selectedCountry === null
                 ? "bg-amber-400 text-neutral-900 border-amber-400"
                 : "border-neutral-700 text-neutral-300"
@@ -241,7 +241,7 @@ export default function Home() {
             <button
               key={country}
               onClick={() => setSelectedCountry(country)}
-              className={`px-4 py-2 rounded-full text-sm border ${
+              className={`px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm border ${
                 selectedCountry === country
                   ? "bg-amber-400 text-neutral-900 border-amber-400"
                   : "border-neutral-700 text-neutral-300"
@@ -260,9 +260,9 @@ export default function Home() {
               const inGenre = filtered.filter((m) => m.genre === genre);
               if (inGenre.length === 0) return null;
               return (
-                <div key={genre} className="mb-10">
-                  <h2 className="text-lg font-medium mb-4">{genre}</h2>
-                  <div className="flex gap-4 overflow-x-auto pb-2">
+                <div key={genre} className="mb-8 sm:mb-10">
+                  <h2 className="text-base sm:text-lg font-medium mb-3 sm:mb-4">{genre}</h2>
+                  <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-2">
                     {inGenre.map((movie) => (
                       <MovieCard
                         key={movie.id}
@@ -285,7 +285,7 @@ export default function Home() {
           onClick={() => setShowAuthModal(false)}
         >
           <div
-            className="bg-neutral-900 rounded-lg p-8 w-full max-w-md relative"
+            className="bg-neutral-900 rounded-lg p-6 sm:p-8 w-full max-w-md relative"
             onClick={(e) => e.stopPropagation()}
           >
             <button
