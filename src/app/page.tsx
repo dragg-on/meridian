@@ -5,11 +5,11 @@ import { supabase } from "@/lib/supabase";
 import MovieCard from "@/components/MovieCard";
 
 export default function Home() {
-  const [movies, setMovies] = useState([]);
+  const [movies, setMovies] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedCountry, setSelectedCountry] = useState(null);
+  const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
   const [query, setQuery] = useState("");
-  const [myList, setMyList] = useState([]);
+  const [myList, setMyList] = useState<number[]>([]);
   const [showMyList, setShowMyList] = useState(false);
 
   useEffect(() => {
@@ -27,7 +27,7 @@ export default function Home() {
 
   const countries = [...new Set(movies.map((m) => m.country))];
 
-  const toggleMyList = (id) => {
+  const toggleMyList = (id: number) => {
     setMyList((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
     );
