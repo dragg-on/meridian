@@ -12,9 +12,8 @@ export default function Home() {
   const [myList, setMyList] = useState<number[]>([]);
   const [showMyList, setShowMyList] = useState(false);
   const [user, setUser] = useState<any>(null);
-  const [continueWatching, setContinueWatching] = useState<any[]>([]);
 
-  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showAuthBox, setShowAuthBox] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "signup">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -35,10 +34,7 @@ export default function Home() {
     async function fetchUser() {
       const { data } = await supabase.auth.getUser();
       setUser(data.user);
-      if (data.user) {
-        fetchMyList(data.user.id);
-        fetchContinueWatching(data.user.id);
-      }
+      if (data.user) fetchMyList(data.user.id);
     }
     fetchUser();
 
@@ -46,10 +42,8 @@ export default function Home() {
       setUser(session?.user ?? null);
       if (session?.user) {
         fetchMyList(session.user.id);
-        fetchContinueWatching(session.user.id);
       } else {
         setMyList([]);
-        setContinueWatching([]);
       }
     });
 
@@ -68,18 +62,6 @@ export default function Home() {
     }
   }
 
-  async function fetchContinueWatching(userId: string) {
-    const { data, error } = await supabase
-      .from("watch_progress")
-      .select("drama_id, updated_at, episodes(title), dramas(*)")
-      .eq("user_id", userId)
-      .order("updated_at", { ascending: false });
-
-    if (!error && data) {
-      setContinueWatching(data);
-    }
-  }
-
   async function handleAuthSubmit(e: React.FormEvent) {
     e.preventDefault();
     setAuthError("");
@@ -89,7 +71,7 @@ export default function Home() {
       if (error) {
         setAuthError(error.message);
       } else {
-        setShowAuthModal(false);
+        setShowAuthBox(false);
         setEmail("");
         setPassword("");
       }
@@ -98,7 +80,7 @@ export default function Home() {
       if (error) {
         setAuthError(error.message);
       } else {
-        setShowAuthModal(false);
+        setShowAuthBox(false);
         setEmail("");
         setPassword("");
       }
@@ -109,7 +91,6 @@ export default function Home() {
     await supabase.auth.signOut();
     setUser(null);
     setMyList([]);
-    setContinueWatching([]);
   }
 
   const countries = [...new Set(movies.map((m) => m.country))];
@@ -117,7 +98,7 @@ export default function Home() {
 
   async function toggleMyList(id: number) {
     if (!user) {
-      setShowAuthModal(true);
+      setShowAuthBox(true);
       return;
     }
     if (myList.includes(id)) {
@@ -146,7 +127,7 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-neutral-950 text-neutral-100">
-      <div className="flex justify-between items-center px-10 py-6">
+      <div className="flex justify-between items-center px-10 py-6 relative">
         <h1 className="text-3xl font-semibold text-amber-400">Meridian</h1>
         <div className="flex items-center gap-3">
           <button
@@ -171,15 +152,62 @@ export default function Home() {
               </button>
             </>
           ) : (
-            <button
-              onClick={() => {
-                setAuthMode("login");
-                setShowAuthModal(true);
-              }}
-              className="px-4 py-2 rounded-full text-sm bg-amber-400 text-neutral-900 font-semibold"
-            >
-              Log in
-            </button>
+            <div className="relative">
+              <button
+                onClick={() => setShowAuthBox(!showAuthBox)}
+                className="px-4 py-2 rounded-full text-sm bg-amber-400 text-neutral-900 font-semibold"
+              >
+                Log in
+              </button>
+
+              {showAuthBox && (
+                <div className="absolute right-0 mt-2 w-72 bg-neutral-900 border border-neutral-700 rounded-lg p-4 shadow-lg z-50">
+                  <div className="flex mb-4 border border-neutral-700 rounded-full overflow-hidden">
+                    <button
+                      onClick={() => setAuthMode("login")}
+                      className={`flex-1 py-1.5 text-sm ${authMode === "login" ? "bg-amber-400 text-neutral-900" : "text-neutral-300"}`}
+                    >
+                      Log in
+                    </button>
+                    <button
+                      onClick={() => setAuthMode("signup")}
+                      className={`flex-1 py-1.5 text-sm ${authMode === "signup" ? "bg-amber-400 text-neutral-900" : "text-neutral-300"}`}
+                    >
+                      Sign up
+                    </button>
+                  </div>
+
+                  <form onSubmit={handleAuthSubmit} className="flex flex-col gap-2">
+                    <input
+                      type="email"
+                      placeholder="Email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                      className="bg-neutral-800 border border-neutral-700 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-amber-400"
+                    />
+                    <input
+                      type="password"
+                      placeholder="Password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      minLength={6}
+                      className="bg-neutral-800 border border-neutral-700 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-amber-400"
+                    />
+
+                    {authError && <p className="text-red-400 text-xs">{authError}</p>}
+
+                    <button
+                      type="submit"
+                      className="bg-amber-400 text-neutral-900 font-semibold py-2 rounded-md text-sm hover:bg-amber-300 mt-1"
+                    >
+                      {authMode === "login" ? "Log in" : "Create account"}
+                    </button>
+                  </form>
+                </div>
+              )}
+            </div>
           )}
         </div>
       </div>
@@ -202,22 +230,6 @@ export default function Home() {
       )}
 
       <div className="px-10">
-        {continueWatching.length > 0 && !showMyList && !query && (
-          <div className="mb-10">
-            <h2 className="text-lg font-medium mb-4">Continue Watching</h2>
-            <div className="flex gap-4 overflow-x-auto pb-2">
-              {continueWatching.map((row: any) => (
-                <MovieCard
-                  key={row.drama_id}
-                  movie={row.dramas}
-                  inList={myList.includes(row.drama_id)}
-                  onToggleList={() => toggleMyList(row.drama_id)}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-
         <input
           type="text"
           placeholder="Search titles..."
@@ -278,72 +290,6 @@ export default function Home() {
           </div>
         )}
       </div>
-
-      {showAuthModal && (
-        <div
-          className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
-          onClick={() => setShowAuthModal(false)}
-        >
-          <div
-            className="bg-neutral-900 rounded-lg p-8 w-full max-w-md relative"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              onClick={() => setShowAuthModal(false)}
-              className="absolute top-4 right-4 text-neutral-400 hover:text-neutral-100 text-xl"
-            >
-              &times;
-            </button>
-
-            <h2 className="text-2xl font-semibold text-amber-400 mb-1">Meridian</h2>
-            <p className="text-neutral-400 text-sm mb-6">
-              {authMode === "login" ? "Sign in to your account" : "Create your account"}
-            </p>
-
-            <form onSubmit={handleAuthSubmit} className="flex flex-col gap-3">
-              <input
-                type="email"
-                placeholder="Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="bg-neutral-800 border border-neutral-700 rounded-md px-4 py-3 text-sm focus:outline-none focus:border-amber-400"
-              />
-              <input
-                type="password"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                minLength={6}
-                className="bg-neutral-800 border border-neutral-700 rounded-md px-4 py-3 text-sm focus:outline-none focus:border-amber-400"
-              />
-
-              {authError && <p className="text-red-400 text-sm">{authError}</p>}
-
-              <button
-                type="submit"
-                className="bg-amber-400 text-neutral-900 font-semibold py-3 rounded-md text-sm hover:bg-amber-300 mt-2"
-              >
-                {authMode === "login" ? "Sign In" : "Create Account"}
-              </button>
-            </form>
-
-            <p className="text-neutral-400 text-sm mt-5">
-              {authMode === "login" ? "New to Meridian? " : "Already have an account? "}
-              <button
-                onClick={() => {
-                  setAuthMode(authMode === "login" ? "signup" : "login");
-                  setAuthError("");
-                }}
-                className="text-neutral-100 hover:underline"
-              >
-                {authMode === "login" ? "Sign up now" : "Sign in"}
-              </button>
-            </p>
-          </div>
-        </div>
-      )}
     </main>
   );
 }
