@@ -1,10 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import MovieCard from "@/components/MovieCard";
 
 export default function Home() {
+  const router = useRouter();
   const [movies, setMovies] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
@@ -13,6 +15,8 @@ export default function Home() {
   const [showMyList, setShowMyList] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [continueWatching, setContinueWatching] = useState<any[]>([]);
+  const [profileId, setProfileId] = useState<number | null>(null);
+  const [profileName, setProfileName] = useState<string | null>(null);
 
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "signup">("login");
@@ -35,21 +39,31 @@ export default function Home() {
     async function fetchUser() {
       const { data } = await supabase.auth.getUser();
       setUser(data.user);
+
       if (data.user) {
-        fetchMyList(data.user.id);
-        fetchContinueWatching(data.user.id);
+        const storedProfileId = localStorage.getItem("activeProfileId");
+        const storedProfileName = localStorage.getItem("activeProfileName");
+        if (storedProfileId) {
+          setProfileId(Number(storedProfileId));
+          setProfileName(storedProfileName);
+          fetchMyList(Number(storedProfileId));
+          fetchContinueWatching(Number(storedProfileId));
+        } else {
+          router.push("/profiles");
+        }
       }
     }
     fetchUser();
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchMyList(session.user.id);
-        fetchContinueWatching(session.user.id);
-      } else {
+      if (!session?.user) {
         setMyList([]);
         setContinueWatching([]);
+        setProfileId(null);
+        setProfileName(null);
+        localStorage.removeItem("activeProfileId");
+        localStorage.removeItem("activeProfileName");
       }
     });
 
@@ -58,21 +72,21 @@ export default function Home() {
     };
   }, []);
 
-  async function fetchMyList(userId: string) {
+  async function fetchMyList(profId: number) {
     const { data, error } = await supabase
       .from("my_list")
       .select("drama_id")
-      .eq("user_id", userId);
+      .eq("profile_id", profId);
     if (!error && data) {
       setMyList(data.map((row) => row.drama_id));
     }
   }
 
-  async function fetchContinueWatching(userId: string) {
+  async function fetchContinueWatching(profId: number) {
     const { data, error } = await supabase
       .from("watch_progress")
       .select("drama_id, updated_at, episodes(title), dramas(*)")
-      .eq("user_id", userId)
+      .eq("profile_id", profId)
       .order("updated_at", { ascending: false });
 
     if (!error && data) {
@@ -101,6 +115,7 @@ export default function Home() {
         setShowAuthModal(false);
         setEmail("");
         setPassword("");
+        router.push("/profiles");
       }
     }
   }
@@ -110,6 +125,10 @@ export default function Home() {
     setUser(null);
     setMyList([]);
     setContinueWatching([]);
+    setProfileId(null);
+    setProfileName(null);
+    localStorage.removeItem("activeProfileId");
+    localStorage.removeItem("activeProfileName");
   }
 
   const countries = [...new Set(movies.map((m) => m.country))];
@@ -120,11 +139,15 @@ export default function Home() {
       setShowAuthModal(true);
       return;
     }
+    if (!profileId) {
+      router.push("/profiles");
+      return;
+    }
     if (myList.includes(id)) {
-      await supabase.from("my_list").delete().eq("user_id", user.id).eq("drama_id", id);
+      await supabase.from("my_list").delete().eq("profile_id", profileId).eq("drama_id", id);
       setMyList((prev) => prev.filter((x) => x !== id));
     } else {
-      await supabase.from("my_list").insert({ user_id: user.id, drama_id: id });
+      await supabase.from("my_list").insert({ user_id: user.id, profile_id: profileId, drama_id: id });
       setMyList((prev) => [...prev, id]);
     }
   }
@@ -162,7 +185,14 @@ export default function Home() {
 
           {user ? (
             <>
-              <span className="text-xs sm:text-sm text-neutral-400 hidden md:inline">{user.email}</span>
+              {profileName && (
+                <button
+                  onClick={() => router.push("/profiles")}
+                  className="text-xs sm:text-sm text-neutral-400 hover:text-amber-400"
+                >
+                  {profileName}
+                </button>
+              )}
               <button
                 onClick={handleLogout}
                 className="px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm border border-neutral-700 text-neutral-300"
